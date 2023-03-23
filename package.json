@@ -1,8 +1,7 @@
 {
-  "name": "@mindinventory/image-editor",
-  "version": "1.0.0",
-  "description": "",
-  "license": "MIT",
+  "name": "@akash_mind18/image-editor",
+  "version": "1.0.7",
+  "description": "NPM package built for React js for image editor",
   "author": "MindInventory",
   "keywords": [],
   "files": [
@@ -17,15 +16,20 @@
       "require": "./dist/image-editor.umd.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "rm -rf ./dist && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "prop-types": "^15.8.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "vite-plugin-css-injected-by-js": "^3.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.28",
