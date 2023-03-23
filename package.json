@@ -1,7 +1,22 @@
 {
-  "name": "image-editor",
-  "private": true,
-  "version": "0.0.1",
+  "name": "@mindinventory/image-editor",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "MindInventory",
+  "keywords": [],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/image-editor.umd.js",
+  "module": "./dist/image-editor.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/image-editor.es.js",
+      "require": "./dist/image-editor.umd.js"
+    }
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

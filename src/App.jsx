@@ -1,9 +1,11 @@
+import Title from "./components/title";
 import "./styles/index.css";
+export * from "./components/title";
 
 const App = () => {
   return (
     <div className='App'>
-      <h1 className='title'>Welcome to Image Editor</h1>
+      <Title />
     </div>
   );
 };
