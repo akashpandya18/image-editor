@@ -1,26 +1,14 @@
 import React, { useState, useRef } from "react";
 import { canvasPreview } from "./components/canvasPreview";
-import { makeAspectCrop, centerCrop } from "./constant/utils";
-import { useDebounceEffect } from "./components/useDebounceEffect";
-import ReactCrop from "./components/ReactCrop/ReactCrop";
+import {
+  makeAspectCrop,
+  centerCrop,
+  useDebounceEffect,
+} from "./constant/utils";
+import Crop from "./components/Crop/Crop";
 import "./styles/index.css";
-// This is to demonstate how to make and center a % aspect crop
-// which is a bit trickier so we use some helper functions.
-function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
-  return centerCrop(
-    makeAspectCrop(
-      {
-        unit: "%",
-        width: 90,
-      },
-      aspect,
-      mediaWidth,
-      mediaHeight
-    ),
-    mediaWidth,
-    mediaHeight
-  );
-}
+import Rotate from "./components/Rotate/Rotate";
+import Zoom from "./components/Zoom/Zoom";
 
 function App() {
   const [imgSrc, setImgSrc] = useState("");
@@ -30,7 +18,25 @@ function App() {
   const [completedCrop, setCompletedCrop] = useState();
   const [scale, setScale] = useState(1);
   const [rotate, setRotate] = useState(0);
+  const [isCrop, setIsCrop] = useState(false);
   const [aspect, setAspect] = useState(16 / 9);
+
+  // make and center a % aspect crop
+  function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
+    return centerCrop(
+      makeAspectCrop(
+        {
+          unit: "%",
+          width: 90,
+        },
+        aspect,
+        mediaWidth,
+        mediaHeight
+      ),
+      mediaWidth,
+      mediaHeight
+    );
+  }
 
   function onSelectFile(e) {
     if (e.target.files && e.target.files.length > 0) {
@@ -52,6 +58,7 @@ function App() {
 
   useDebounceEffect(
     async () => {
+      console.log("previewCanvasRef", previewCanvasRef);
       if (
         completedCrop?.width &&
         completedCrop?.height &&
@@ -69,7 +76,7 @@ function App() {
       }
     },
     100,
-    [completedCrop, scale, rotate]
+    [completedCrop, scale, rotate, isCrop]
   );
 
   function handleToggleAspectClick() {
@@ -82,45 +89,39 @@ function App() {
     }
   }
 
+  function downloadImage(image) {
+    const link = document.createElement("a");
+    link.href = image.src;
+    link.download = "image.jpg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="App">
       <div className="Crop-Controls">
         <input type="file" accept="image/*" onChange={onSelectFile} />
-        <div>
-          <label htmlFor="scale-input">Scale: </label>
-          <input
-            id="scale-input"
-            type="number"
-            step="0.1"
-            value={scale}
-            disabled={!imgSrc}
-            onChange={(e) => setScale(Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <label htmlFor="rotate-input">Rotate: </label>
-          <input
-            id="rotate-input"
-            type="number"
-            value={rotate}
-            disabled={!imgSrc}
-            onChange={(e) =>
-              setRotate(Math.min(180, Math.max(-180, Number(e.target.value))))
-            }
-          />
-        </div>
+        <Zoom value={scale} imgSrc={imgSrc} setScale={setScale} />
+        <Rotate value={rotate} imgSrc={imgSrc} setRotate={setRotate} />
         <div>
           <button onClick={handleToggleAspectClick}>
             Toggle aspect {aspect ? "off" : "on"}
           </button>
+          <button onClick={() => setIsCrop(true)} disabled={!imgSrc}>
+            Crop
+          </button>
         </div>
       </div>
+
       {!!imgSrc && (
-        <ReactCrop
+        <Crop
           crop={crop}
           onChange={(_, percentCrop) => setCrop(percentCrop)}
           onComplete={(c) => setCompletedCrop(c)}
           aspect={aspect}
+          isCrop={isCrop}
+          setIsCrop={setIsCrop}
         >
           <img
             ref={imgRef}
@@ -129,10 +130,11 @@ function App() {
             style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
             onLoad={onImageLoad}
           />
-        </ReactCrop>
+        </Crop>
       )}
+
       <div>
-        {!!completedCrop && (
+        {!!completedCrop && isCrop && (
           <canvas
             ref={previewCanvasRef}
             style={{
@@ -149,4 +151,3 @@ function App() {
 }
 
 export default App;
-

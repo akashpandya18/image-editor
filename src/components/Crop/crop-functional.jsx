@@ -1,4 +1,4 @@
-import React, { PureComponent, createRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import clsx from "clsx";
 
 import {
@@ -11,49 +11,68 @@ import {
   nudgeCrop,
 } from "../../constant/utils";
 
-import "./ReactCrop.css";
+import "./Crop.css";
 
 const DOC_MOVE_OPTS = { capture: true, passive: false };
 
-class ReactCrop extends PureComponent {
-  static xOrds = ["e", "w"];
-  static yOrds = ["n", "s"];
-  static xyOrds = ["nw", "ne", "se", "sw"];
-
-  static nudgeStep = 1;
-  static nudgeStepMedium = 10;
-  static nudgeStepLarge = 100;
-
-  static defaultProps = {
-    ariaLabels: {
-      cropArea: "Use the arrow keys to move the crop selection area",
-      nwDragHandle:
-        "Use the arrow keys to move the north west drag handle to change the crop selection area",
-      nDragHandle:
-        "Use the up and down arrow keys to move the north drag handle to change the crop selection area",
-      neDragHandle:
-        "Use the arrow keys to move the north east drag handle to change the crop selection area",
-      eDragHandle:
-        "Use the up and down arrow keys to move the east drag handle to change the crop selection area",
-      seDragHandle:
-        "Use the arrow keys to move the south east drag handle to change the crop selection area",
-      sDragHandle:
-        "Use the up and down arrow keys to move the south drag handle to change the crop selection area",
-      swDragHandle:
-        "Use the arrow keys to move the south west drag handle to change the crop selection area",
-      wDragHandle:
-        "Use the up and down arrow keys to move the west drag handle to change the crop selection area",
-    },
+const Crop = React.memo((props) => {
+  const ariaLabel = {
+    cropArea: "Use the arrow keys to move the crop selection area",
+    nwDragHandle:
+      "Use the arrow keys to move the north west drag handle to change the crop selection area",
+    nDragHandle:
+      "Use the up and down arrow keys to move the north drag handle to change the crop selection area",
+    neDragHandle:
+      "Use the arrow keys to move the north east drag handle to change the crop selection area",
+    eDragHandle:
+      "Use the up and down arrow keys to move the east drag handle to change the crop selection area",
+    seDragHandle:
+      "Use the arrow keys to move the south east drag handle to change the crop selection area",
+    sDragHandle:
+      "Use the up and down arrow keys to move the south drag handle to change the crop selection area",
+    swDragHandle:
+      "Use the arrow keys to move the south west drag handle to change the crop selection area",
+    wDragHandle:
+      "Use the up and down arrow keys to move the west drag handle to change the crop selection area",
   };
 
-  get document() {
-    return document;
-  }
+  const {
+    crop,
+    onComplete,
+    disabled,
+    locked,
+    keepSelection,
+    onChange,
+    isCrop,
+    onDragStart,
+    aspect = 0,
+    minWidth = 0,
+    minHeight = 0,
+    maxWidth,
+    maxHeight,
+    onDragEnd,
+    ariaLabels = ariaLabel,
+    renderSelectionAddon,
+    ruleOfThirds,
+    children,
+    circularCrop,
+    className,
+    style,
+  } = props;
 
-  docMoveBound = false;
-  mouseDownOnCrop = false;
-  dragStarted = false;
-  evData = {
+  const xOrds = ["e", "w"];
+  const yOrds = ["n", "s"];
+  const xyOrds = ["nw", "ne", "se", "sw"];
+
+  const nudgeStep = 1;
+  const nudgeStepMedium = 10;
+  const nudgeStepLarge = 100;
+
+  let docMoveBound = false;
+  let mouseDownOnCrop = false;
+  let dragStarted = false;
+
+  let evData = {
     startClientX: 0,
     startClientY: 0,
     startCropX: 0,
@@ -63,34 +82,30 @@ class ReactCrop extends PureComponent {
     isResize: true,
   };
 
-  componentRef = createRef();
-  mediaRef = createRef();
-  resizeObserver;
-  initChangeCalled = false;
-
-  state = {
+  const [cropState, setCropState] = useState({
     cropIsActive: false,
     newCropIsBeingDrawn: false,
-  };
+  });
+
+  const componentRef = useRef(null);
+  const mediaRef = useRef(null);
+  const resizeObserverRef = useRef(null);
+  const documentRef = useRef(document);
 
   // We unfortunately get the bounding box every time as x+y changes
   // due to scrolling.
-  getBox() {
-    const el = this.mediaRef.current;
+  const getBox = () => {
+    const el = mediaRef.current;
     if (!el) {
       return { x: 0, y: 0, width: 0, height: 0 };
     }
     const { x, y, width, height } = el.getBoundingClientRect();
     return { x, y, width, height };
-  }
+  };
 
-  componentDidUpdate(prevProps) {
-    const { crop, onComplete } = this.props;
-
-    // Useful for when programatically setting a new
-    // crop and wanting to show a preview.
-    if (onComplete && !prevProps.crop && crop) {
-      const { width, height } = this.getBox();
+  useEffect(() => {
+    if (onComplete && crop) {
+      const { width, height } = getBox();
       if (width && height) {
         onComplete(
           convertToPixelCrop(crop, width, height),
@@ -98,65 +113,72 @@ class ReactCrop extends PureComponent {
         );
       }
     }
-  }
+  }, [crop]);
 
-  componentWillUnmount() {
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
-  }
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      // handle resize event
+    });
 
-  bindDocMove() {
-    if (this.docMoveBound) {
+    resizeObserverRef.current = resizeObserver;
+
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  const bindDocMove = () => {
+    if (docMoveBound) {
       return;
     }
 
-    this.document.addEventListener(
+    documentRef.current.addEventListener(
       "pointermove",
-      this.onDocPointerMove,
+      onDocPointerMove,
       DOC_MOVE_OPTS
     );
-    this.document.addEventListener(
+    documentRef.current.addEventListener(
       "pointerup",
-      this.onDocPointerDone,
+      onDocPointerDone,
       DOC_MOVE_OPTS
     );
-    this.document.addEventListener(
+    documentRef.current.addEventListener(
       "pointercancel",
-      this.onDocPointerDone,
+      onDocPointerDone,
       DOC_MOVE_OPTS
     );
 
-    this.docMoveBound = true;
-  }
+    docMoveBound = true;
+  };
 
-  unbindDocMove() {
-    if (!this.docMoveBound) {
+  const unbindDocMove = () => {
+    if (!docMoveBound) {
       return;
     }
 
-    this.document.removeEventListener(
+    documentRef.current.removeEventListener(
       "pointermove",
-      this.onDocPointerMove,
+      onDocPointerMove,
       DOC_MOVE_OPTS
     );
-    this.document.removeEventListener(
+    documentRef.current.removeEventListener(
       "pointerup",
-      this.onDocPointerDone,
+      onDocPointerDone,
       DOC_MOVE_OPTS
     );
-    this.document.removeEventListener(
+    documentRef.current.removeEventListener(
       "pointercancel",
-      this.onDocPointerDone,
+      onDocPointerDone,
       DOC_MOVE_OPTS
     );
 
-    this.docMoveBound = false;
-  }
+    docMoveBound = false;
+  };
 
-  onCropPointerDown = (e) => {
-    const { crop, disabled } = this.props;
-    const box = this.getBox();
+  const onCropPointerDown = (e) => {
+    const box = getBox();
 
     if (!crop) {
       return;
@@ -171,10 +193,10 @@ class ReactCrop extends PureComponent {
     if (e.cancelable) e.preventDefault(); // Stop drag selection.
 
     // Bind to doc to follow movements outside of element.
-    this.bindDocMove();
+    bindDocMove();
 
     // Focus for detecting keypress.
-    this.componentRef.current.focus({ preventScroll: true });
+    componentRef.current.focus({ preventScroll: true });
 
     const ord = e.target.dataset.ord;
     const isResize = Boolean(ord);
@@ -216,7 +238,7 @@ class ReactCrop extends PureComponent {
       startClientY = startCropY + box.y + fromCornerY;
     }
 
-    this.evData = {
+    evData = {
       startClientX,
       startClientY,
       startCropX,
@@ -227,85 +249,89 @@ class ReactCrop extends PureComponent {
       ord,
     };
 
-    this.mouseDownOnCrop = true;
-    this.setState({ cropIsActive: true });
+    mouseDownOnCrop = true;
+    setCropState((prevState) => ({
+      ...prevState,
+      cropIsActive: true,
+    }));
   };
 
-  onComponentPointerDown = (e) => {
-    const { crop, disabled, locked, keepSelection, onChange } = this.props;
-    const box = this.getBox();
+  const onComponentPointerDown = (e) => {
+    if (isCrop) {
+      const box = getBox();
 
-    if (disabled || locked || (keepSelection && crop)) {
-      return;
+      if (disabled || locked || (keepSelection && crop)) {
+        return;
+      }
+
+      if (e.cancelable) e.preventDefault(); // Stop drag selection.
+
+      // Bind to doc to follow movements outside of element.
+      bindDocMove();
+
+      // Focus for detecting keypress.
+      componentRef.current.focus({ preventScroll: true });
+
+      const cropX = e.clientX - box.x;
+      const cropY = e.clientY - box.y;
+      const nextCrop = {
+        unit: "px",
+        x: cropX,
+        y: cropY,
+        width: 0,
+        height: 0,
+      };
+
+      evData = {
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        startCropX: cropX,
+        startCropY: cropY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        isResize: true,
+      };
+
+      mouseDownOnCrop = true;
+
+      onChange(
+        convertToPixelCrop(nextCrop, box.width, box.height),
+        convertToPercentCrop(nextCrop, box.width, box.height)
+      );
+
+      setCropState({
+        cropIsActive: true,
+        newCropIsBeingDrawn: true,
+      });
     }
-
-    if (e.cancelable) e.preventDefault(); // Stop drag selection.
-
-    // Bind to doc to follow movements outside of element.
-    this.bindDocMove();
-
-    // Focus for detecting keypress.
-    this.componentRef.current.focus({ preventScroll: true });
-
-    const cropX = e.clientX - box.x;
-    const cropY = e.clientY - box.y;
-    const nextCrop = {
-      unit: "px",
-      x: cropX,
-      y: cropY,
-      width: 0,
-      height: 0,
-    };
-
-    this.evData = {
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      startCropX: cropX,
-      startCropY: cropY,
-      clientX: e.clientX,
-      clientY: e.clientY,
-      isResize: true,
-    };
-
-    this.mouseDownOnCrop = true;
-
-    onChange(
-      convertToPixelCrop(nextCrop, box.width, box.height),
-      convertToPercentCrop(nextCrop, box.width, box.height)
-    );
-
-    this.setState({ cropIsActive: true, newCropIsBeingDrawn: true });
   };
 
-  onDocPointerMove = (e) => {
-    const { crop, disabled, onChange, onDragStart } = this.props;
-    const box = this.getBox();
+  const onDocPointerMove = (e) => {
+    const box = getBox();
 
-    if (disabled || !crop || !this.mouseDownOnCrop) {
+    if (disabled || !crop || !mouseDownOnCrop) {
       return;
     }
 
     // Stop drag selection.
     if (e.cancelable) e.preventDefault();
 
-    if (!this.dragStarted) {
-      this.dragStarted = true;
+    if (!dragStarted) {
+      dragStarted = true;
       if (onDragStart) {
         onDragStart(e);
       }
     }
 
-    // Update pointer position.
-    const { evData } = this;
     evData.clientX = e.clientX;
     evData.clientY = e.clientY;
 
     let nextCrop;
 
     if (evData.isResize) {
-      nextCrop = this.resizeCrop();
+      nextCrop = resizeCrop();
     } else {
-      nextCrop = this.dragCrop();
+      nextCrop = dragCrop();
     }
 
     if (!areCropsEqual(crop, nextCrop)) {
@@ -316,9 +342,8 @@ class ReactCrop extends PureComponent {
     }
   };
 
-  onComponentKeyDown = (e) => {
-    const { crop, disabled, onChange, onComplete } = this.props;
-    const box = this.getBox();
+  const onComponentKeyDown = (e) => {
+    const box = getBox();
 
     if (disabled) {
       return;
@@ -331,27 +356,27 @@ class ReactCrop extends PureComponent {
       return;
     }
 
-    const nextCrop = this.makePixelCrop();
+    const nextCrop = makePixelCrop();
     const ctrlCmdPressed = navigator.platform.match("Mac")
       ? e.metaKey
       : e.ctrlKey;
-    const nudgeStep = ctrlCmdPressed
-      ? ReactCrop.nudgeStepLarge
+    const nudgeSteps = ctrlCmdPressed
+      ? nudgeStepLarge
       : e.shiftKey
-      ? ReactCrop.nudgeStepMedium
-      : ReactCrop.nudgeStep;
+      ? nudgeStepMedium
+      : nudgeStep;
 
     if (keyCode === "ArrowLeft") {
-      nextCrop.x -= nudgeStep;
+      nextCrop.x -= nudgeSteps;
       nudged = true;
     } else if (keyCode === "ArrowRight") {
-      nextCrop.x += nudgeStep;
+      nextCrop.x += nudgeSteps;
       nudged = true;
     } else if (keyCode === "ArrowUp") {
-      nextCrop.y -= nudgeStep;
+      nextCrop.y -= nudgeSteps;
       nudged = true;
     } else if (keyCode === "ArrowDown") {
-      nextCrop.y += nudgeStep;
+      nextCrop.y += nudgeSteps;
       nudged = true;
     }
 
@@ -371,19 +396,8 @@ class ReactCrop extends PureComponent {
     }
   };
 
-  onHandlerKeyDown = (e, ord) => {
-    const {
-      aspect = 0,
-      crop,
-      disabled,
-      minWidth = 0,
-      minHeight = 0,
-      maxWidth,
-      maxHeight,
-      onChange,
-      onComplete,
-    } = this.props;
-    const box = this.getBox();
+  const onHandlerKeyDown = (e, ord) => {
+    const box = getBox();
 
     if (disabled || !crop) {
       return;
@@ -406,10 +420,10 @@ class ReactCrop extends PureComponent {
       ? e.metaKey
       : e.ctrlKey;
     const offset = ctrlCmdPressed
-      ? ReactCrop.nudgeStepLarge
+      ? nudgeStepLarge
       : e.shiftKey
-      ? ReactCrop.nudgeStepMedium
-      : ReactCrop.nudgeStep;
+      ? nudgeStepMedium
+      : nudgeStep;
 
     const pixelCrop = convertToPixelCrop(crop, box.width, box.height);
     const nudgedCrop = nudgeCrop(pixelCrop, e.key, offset, ord);
@@ -439,19 +453,18 @@ class ReactCrop extends PureComponent {
     }
   };
 
-  onDocPointerDone = (e) => {
-    const { crop, disabled, onComplete, onDragEnd } = this.props;
-    const box = this.getBox();
+  const onDocPointerDone = (e) => {
+    const box = getBox();
 
-    this.unbindDocMove();
+    unbindDocMove();
 
     if (disabled || !crop) {
       return;
     }
 
-    if (this.mouseDownOnCrop) {
-      this.mouseDownOnCrop = false;
-      this.dragStarted = false;
+    if (mouseDownOnCrop) {
+      mouseDownOnCrop = false;
+      dragStarted = false;
 
       onDragEnd && onDragEnd(e);
       onComplete &&
@@ -460,18 +473,18 @@ class ReactCrop extends PureComponent {
           convertToPercentCrop(crop, box.width, box.height)
         );
 
-      this.setState({ cropIsActive: false, newCropIsBeingDrawn: false });
+      setCropState({
+        cropIsActive: false,
+        newCropIsBeingDrawn: false,
+      });
     }
   };
 
-  onDragFocus = (e) => {
-    // Fixes #491
-    this.componentRef.current?.scrollTo(0, 0);
+  const onDragFocus = (e) => {
+    componentRef.current?.scrollTo(0, 0);
   };
 
-  getCropStyle() {
-    const { crop } = this.props;
-
+  const getCropStyle = () => {
     if (!crop) {
       return undefined;
     }
@@ -482,12 +495,11 @@ class ReactCrop extends PureComponent {
       width: `${crop.width}${crop.unit}`,
       height: `${crop.height}${crop.unit}`,
     };
-  }
+  };
 
-  dragCrop() {
-    const { evData } = this;
-    const box = this.getBox();
-    const nextCrop = this.makePixelCrop();
+  const dragCrop = () => {
+    const box = getBox();
+    const nextCrop = makePixelCrop();
     const xDiff = evData.clientX - evData.startClientX;
     const yDiff = evData.clientY - evData.startClientY;
 
@@ -503,10 +515,9 @@ class ReactCrop extends PureComponent {
     );
 
     return nextCrop;
-  }
+  };
 
-  getPointRegion(box) {
-    const { evData } = this;
+  const getPointRegion = (box) => {
     const relativeX = evData.clientX - box.x;
     const relativeY = evData.clientY - box.y;
     const topHalf = relativeY < evData.startCropY;
@@ -517,20 +528,12 @@ class ReactCrop extends PureComponent {
     } else {
       return topHalf ? "ne" : "se";
     }
-  }
+  };
 
-  resizeCrop() {
-    const { evData } = this;
-    const box = this.getBox();
-    const {
-      aspect = 0,
-      minWidth = 0,
-      minHeight = 0,
-      maxWidth,
-      maxHeight,
-    } = this.props;
-    const area = this.getPointRegion(box);
-    const nextCrop = this.makePixelCrop();
+  const resizeCrop = () => {
+    const box = getBox();
+    const area = getPointRegion(box);
+    const nextCrop = makePixelCrop();
     const resolvedOrd = evData.ord ? evData.ord : area;
     const xDiff = evData.clientX - evData.startClientX;
     const yDiff = evData.clientY - evData.startClientY;
@@ -601,32 +604,24 @@ class ReactCrop extends PureComponent {
 
     // Apply x/y/width/height changes depending on ordinate
     // (fixed aspect always applies both).
-    if (aspect || ReactCrop.xyOrds.indexOf(resolvedOrd) > -1) {
+    if (aspect || xyOrds.indexOf(resolvedOrd) > -1) {
       nextCrop.x = containedCrop.x;
       nextCrop.y = containedCrop.y;
       nextCrop.width = containedCrop.width;
       nextCrop.height = containedCrop.height;
-    } else if (ReactCrop.xOrds.indexOf(resolvedOrd) > -1) {
+    } else if (xOrds.indexOf(resolvedOrd) > -1) {
       nextCrop.x = containedCrop.x;
       nextCrop.width = containedCrop.width;
-    } else if (ReactCrop.yOrds.indexOf(resolvedOrd) > -1) {
+    } else if (yOrds.indexOf(resolvedOrd) > -1) {
       nextCrop.y = containedCrop.y;
       nextCrop.height = containedCrop.height;
     }
 
     return nextCrop;
-  }
+  };
 
-  createCropSelection() {
-    const {
-      ariaLabels = ReactCrop.defaultProps.ariaLabels,
-      disabled,
-      locked,
-      renderSelectionAddon,
-      ruleOfThirds,
-      crop,
-    } = this.props;
-    const style = this.getCropStyle();
+  const createCropSelection = () => {
+    const style = getCropStyle();
 
     if (!crop) {
       return undefined;
@@ -635,150 +630,136 @@ class ReactCrop extends PureComponent {
     return (
       <div
         style={style}
-        className="ReactCrop__crop-selection"
-        onPointerDown={this.onCropPointerDown}
+        className="Crop__crop-selection"
+        onPointerDown={onCropPointerDown}
         aria-label={ariaLabels.cropArea}
         tabIndex={0}
-        onKeyDown={this.onComponentKeyDown}
+        onKeyDown={onComponentKeyDown}
         role="group"
       >
         {!disabled && !locked && (
-          <div className="ReactCrop__drag-elements" onFocus={this.onDragFocus}>
-            <div className="ReactCrop__drag-bar ord-n" data-ord="n" />
-            <div className="ReactCrop__drag-bar ord-e" data-ord="e" />
-            <div className="ReactCrop__drag-bar ord-s" data-ord="s" />
-            <div className="ReactCrop__drag-bar ord-w" data-ord="w" />
+          <div className="Crop__drag-elements" onFocus={onDragFocus}>
+            <div className="Crop__drag-bar ord-n" data-ord="n" />
+            <div className="Crop__drag-bar ord-e" data-ord="e" />
+            <div className="Crop__drag-bar ord-s" data-ord="s" />
+            <div className="Crop__drag-bar ord-w" data-ord="w" />
 
             <div
-              className="ReactCrop__drag-handle ord-nw"
+              className="Crop__drag-handle ord-nw"
               data-ord="nw"
               tabIndex={0}
               aria-label={ariaLabels.nwDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "nw")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "nw")}
               role="button"
             />
             <div
-              className="ReactCrop__drag-handle ord-n"
+              className="Crop__drag-handle ord-n"
               data-ord="n"
               tabIndex={0}
               aria-label={ariaLabels.nDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "n")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "n")}
               role="button"
             />
             <div
-              className="ReactCrop__drag-handle ord-ne"
+              className="Crop__drag-handle ord-ne"
               data-ord="ne"
               tabIndex={0}
               aria-label={ariaLabels.neDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "ne")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "ne")}
               role="button"
             />
             <div
-              className="ReactCrop__drag-handle ord-e"
+              className="Crop__drag-handle ord-e"
               data-ord="e"
               tabIndex={0}
               aria-label={ariaLabels.eDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "e")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "e")}
               role="button"
             />
             <div
-              className="ReactCrop__drag-handle ord-se"
+              className="Crop__drag-handle ord-se"
               data-ord="se"
               tabIndex={0}
               aria-label={ariaLabels.seDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "se")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "se")}
               role="button"
             />
             <div
-              className="ReactCrop__drag-handle ord-s"
+              className="Crop__drag-handle ord-s"
               data-ord="s"
               tabIndex={0}
               aria-label={ariaLabels.sDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "s")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "s")}
               role="button"
             />
             <div
-              className="ReactCrop__drag-handle ord-sw"
+              className="Crop__drag-handle ord-sw"
               data-ord="sw"
               tabIndex={0}
               aria-label={ariaLabels.swDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "sw")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "sw")}
               role="button"
             />
             <div
-              className="ReactCrop__drag-handle ord-w"
+              className="Crop__drag-handle ord-w"
               data-ord="w"
               tabIndex={0}
               aria-label={ariaLabels.wDragHandle}
-              onKeyDown={(e) => this.onHandlerKeyDown(e, "w")}
+              onKeyDown={(e) => onHandlerKeyDown(e, "w")}
               role="button"
             />
           </div>
         )}
         {renderSelectionAddon && (
           <div
-            className="ReactCrop__selection-addon"
+            className="Crop__selection-addon"
             onMouseDown={(e) => e.stopPropagation()}
           >
-            {renderSelectionAddon(this.state)}
+            {renderSelectionAddon(cropState)}
           </div>
         )}
         {ruleOfThirds && (
           <>
-            <div className="ReactCrop__rule-of-thirds-hz" />
-            <div className="ReactCrop__rule-of-thirds-vt" />
+            <div className="Crop__rule-of-thirds-hz" />
+            <div className="Crop__rule-of-thirds-vt" />
           </>
         )}
       </div>
     );
-  }
+  };
 
-  makePixelCrop() {
-    const crop = { ...defaultCrop, ...(this.props.crop || {}) };
-    const box = this.getBox();
-    return convertToPixelCrop(crop, box.width, box.height);
-  }
+  const makePixelCrop = () => {
+    const crop2 = { ...defaultCrop, ...(crop || {}) };
+    const box = getBox();
+    return convertToPixelCrop(crop2, box.width, box.height);
+  };
 
-  render() {
-    const {
-      aspect,
-      children,
-      circularCrop,
-      className,
-      crop,
-      disabled,
-      locked,
-      style,
-      ruleOfThirds,
-    } = this.props;
-    const { cropIsActive, newCropIsBeingDrawn } = this.state;
-    const cropSelection = crop ? this.createCropSelection() : null;
+  const cropSelection = crop && isCrop ? createCropSelection() : null;
 
-    const componentClasses = clsx("ReactCrop", className, {
-      "ReactCrop--active": cropIsActive,
-      "ReactCrop--disabled": disabled,
-      "ReactCrop--locked": locked,
-      "ReactCrop--new-crop": newCropIsBeingDrawn,
-      "ReactCrop--fixed-aspect": crop && aspect,
-      "ReactCrop--circular-crop": crop && circularCrop,
-      "ReactCrop--rule-of-thirds": crop && ruleOfThirds,
-      "ReactCrop--invisible-crop":
-        !this.dragStarted && crop && !crop.width && !crop.height,
-    });
+  const componentClasses = clsx("Crop", className, {
+    "Crop--active": cropState.cropIsActive,
+    "Crop--disabled": disabled,
+    "Crop--locked": locked,
+    "Crop--new-crop": cropState.newCropIsBeingDrawn,
+    "Crop--fixed-aspect": crop && aspect,
+    "Crop--circular-crop": crop && circularCrop,
+    "Crop--rule-of-thirds": crop && ruleOfThirds,
+    "Crop--invisible-crop": !dragStarted && crop && !crop.width && !crop.height,
+    "Crop--noCrop": !isCrop,
+  });
 
-    return (
-      <div ref={this.componentRef} className={componentClasses} style={style}>
-        <div
-          ref={this.mediaRef}
-          className="ReactCrop__child-wrapper"
-          onPointerDown={this.onComponentPointerDown}
-        >
-          {children}
-        </div>
-        {cropSelection}
+  return (
+    <div ref={componentRef} className={componentClasses} style={style}>
+      <div
+        ref={mediaRef}
+        className="Crop__child-wrapper"
+        onPointerDown={onComponentPointerDown}
+      >
+        {children}
       </div>
-    );
-  }
-}
+      {cropSelection}
+    </div>
+  );
+});
 
-export { ReactCrop as default, ReactCrop as Component };
+export default Crop;

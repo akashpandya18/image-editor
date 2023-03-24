@@ -1,9 +1,23 @@
+import { useEffect } from "react";
+
 export const defaultCrop = {
   x: 0,
   y: 0,
   width: 0,
   height: 0,
   unit: "px",
+};
+
+export const useDebounceEffect = (fn, waitTime, deps) => {
+  useEffect(() => {
+    const t = setTimeout(() => {
+      fn.apply(undefined, deps);
+    }, waitTime);
+
+    return () => {
+      clearTimeout(t);
+    };
+  }, deps);
 };
 
 export function clamp(num, min, max) {
