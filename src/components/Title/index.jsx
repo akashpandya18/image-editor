@@ -1,6 +1,8 @@
 import React from "react";
+import PropTypes from "prop-types";
+import "./index.css";
 
-const Title = (props) => {
+export default function Title(props) {
   return (
     <div>
       <p className='title'>
@@ -9,6 +11,8 @@ const Title = (props) => {
       </p>
     </div>
   );
-};
+}
 
-export default Title;
+Title.propTypes = {
+  name: PropTypes.string,
+};

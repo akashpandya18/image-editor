@@ -1,11 +1,9 @@
-import Title from "./components/title";
-import "./styles/index.css";
-export * from "./components/title";
+import Title from "./components/Title";
 
 const App = () => {
   return (
     <div className='App'>
-      <Title />
+      <Title name={"Test"} />
     </div>
   );
 };
