@@ -1,1 +1,15 @@
 /* root styling */
+:root {
+  --gray300: #d1d5db;
+  --gray400: #9ca3af;
+  --gray900: #111827;
+  --slate200: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+div {
+  outline-style: none;
+}

@@ -1,0 +1,43 @@
+.upload-file-btn{
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 3rem;
+    text-align: center; 
+    border-width: 2px;
+    border-radius: 0.5rem;
+    border-color: var(--gray300);
+    border-style: dashed;
+    -webkit-appearance: button;
+    background-color: transparent;
+    background-image: none;
+    cursor: pointer;
+    text-transform: none;
+}
+
+.upload-file-btn:hover{
+    border-color: var(--gray400);
+}
+
+.upload-file-svg{
+    color: var(--gray400);
+    width: 3rem;
+    height: 3rem;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    vertical-align: middle;
+}
+
+.upload-file-span{
+    display: block;
+    color: var(--gray900);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.file-input{
+    display: none;
+}

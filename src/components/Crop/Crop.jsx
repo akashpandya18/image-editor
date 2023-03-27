@@ -232,49 +232,53 @@ class Crop extends PureComponent {
   };
 
   onComponentPointerDown = (e) => {
-    const { crop, disabled, locked, keepSelection, onChange } = this.props;
-    const box = this.getBox();
+    const { crop, disabled, locked, keepSelection, onChange, isCrop } =
+      this.props;
 
-    if (disabled || locked || (keepSelection && crop)) {
-      return;
+    if (isCrop) {
+      const box = this.getBox();
+
+      if (disabled || locked || (keepSelection && crop)) {
+        return;
+      }
+
+      if (e.cancelable) e.preventDefault(); // Stop drag selection.
+
+      // Bind to doc to follow movements outside of element.
+      this.bindDocMove();
+
+      // Focus for detecting keypress.
+      this.componentRef.current.focus({ preventScroll: true });
+
+      const cropX = e.clientX - box.x;
+      const cropY = e.clientY - box.y;
+      const nextCrop = {
+        unit: "px",
+        x: cropX,
+        y: cropY,
+        width: 0,
+        height: 0,
+      };
+
+      this.evData = {
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        startCropX: cropX,
+        startCropY: cropY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        isResize: true,
+      };
+
+      this.mouseDownOnCrop = true;
+
+      onChange(
+        convertToPixelCrop(nextCrop, box.width, box.height),
+        convertToPercentCrop(nextCrop, box.width, box.height)
+      );
+
+      this.setState({ cropIsActive: true, newCropIsBeingDrawn: true });
     }
-
-    if (e.cancelable) e.preventDefault(); // Stop drag selection.
-
-    // Bind to doc to follow movements outside of element.
-    this.bindDocMove();
-
-    // Focus for detecting keypress.
-    this.componentRef.current.focus({ preventScroll: true });
-
-    const cropX = e.clientX - box.x;
-    const cropY = e.clientY - box.y;
-    const nextCrop = {
-      unit: "px",
-      x: cropX,
-      y: cropY,
-      width: 0,
-      height: 0,
-    };
-
-    this.evData = {
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      startCropX: cropX,
-      startCropY: cropY,
-      clientX: e.clientX,
-      clientY: e.clientY,
-      isResize: true,
-    };
-
-    this.mouseDownOnCrop = true;
-
-    onChange(
-      convertToPixelCrop(nextCrop, box.width, box.height),
-      convertToPercentCrop(nextCrop, box.width, box.height)
-    );
-
-    this.setState({ cropIsActive: true, newCropIsBeingDrawn: true });
   };
 
   onDocPointerMove = (e) => {
@@ -750,9 +754,10 @@ class Crop extends PureComponent {
       locked,
       style,
       ruleOfThirds,
+      isCrop,
     } = this.props;
     const { cropIsActive, newCropIsBeingDrawn } = this.state;
-    const cropSelection = crop ? this.createCropSelection() : null;
+    const cropSelection = crop && isCrop ? this.createCropSelection() : null;
 
     const componentClasses = clsx("Crop", className, {
       "Crop--active": cropIsActive,
@@ -764,6 +769,7 @@ class Crop extends PureComponent {
       "Crop--rule-of-thirds": crop && ruleOfThirds,
       "Crop--invisible-crop":
         !this.dragStarted && crop && !crop.width && !crop.height,
+      "Crop--noCrop": !isCrop,
     });
 
     return (
