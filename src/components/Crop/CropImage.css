@@ -18,6 +18,27 @@
   padding-bottom: 1rem;
 }
 
+.crop-input-container {
+  display: flex;
+  max-width: 100%;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.crop-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.crop-input-box {
+  padding: 0.5rem;
+  border: 1px solid #2d2d2d40;
+  border-radius: 0.5rem;
+  height: 3rem;
+}
+
 .crop-aspect-ratio {
   display: flex;
   flex-direction: column;

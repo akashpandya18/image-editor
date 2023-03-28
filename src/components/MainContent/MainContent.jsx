@@ -18,6 +18,11 @@ const MainContent = ({
   previewCanvasRef,
   onImageLoad,
 }) => {
+  const handleOnChange = (c, percentCrop) => {
+    setCrop(percentCrop);
+    setCompletedCrop(c);
+  };
+
   return (
     <div className="Crop-Controls-Main">
       <div className="Crop-Controls">
@@ -26,7 +31,7 @@ const MainContent = ({
             <div className="Crop-Section-Wrapper">
               <Crop
                 crop={crop}
-                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                onChange={(c, percentCrop) => handleOnChange(c, percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
                 aspect={aspect}
                 isCrop={isCrop}

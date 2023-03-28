@@ -108,6 +108,8 @@ function App() {
               aspect={aspect}
               handleToggleAspectClick={handleToggleAspectClick}
               setIsCrop={setIsCrop}
+              completedCrop={completedCrop}
+              setCompletedCrop={setCompletedCrop}
             />
             <MainContent
               scale={scale}

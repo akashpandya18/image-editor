@@ -23,6 +23,8 @@ const Sidebar = ({
   aspect,
   handleToggleAspectClick,
   setIsCrop,
+  completedCrop,
+  setCompletedCrop,
 }) => {
   const [activeTab, setActiveTab] = useState("resize");
 
@@ -87,7 +89,8 @@ const Sidebar = ({
                 <CropImage
                   aspect={aspect}
                   handleToggleAspectClick={handleToggleAspectClick}
-                  imgSrc={imgSrc}
+                  completedCrop={completedCrop}
+                  setCompletedCrop={setCompletedCrop}
                 />
               ) : (
                 <div className="tab-rotate-wrapper">
