@@ -1,14 +1,14 @@
 import React, { useState, useRef } from "react";
-import { canvasPreview } from "./components/canvasPreview";
+import { canvasPreview } from "./canvasPreview";
 import {
   makeAspectCrop,
   centerCrop,
   useDebounceEffect,
-} from "./constant/utils";
-import "./styles/index.css";
-import FileUpload from "./components/FileUpload/FileUpload";
-import Sidebar from "./components/Sidebar/Sidebar";
-import MainContent from "./components/MainContent/MainContent";
+} from "../constant/utils";
+import "../styles/index.css";
+import FileUpload from "./FileUpload/FileUpload";
+import Sidebar from "./Sidebar/Sidebar";
+import MainContent from "./MainContent/MainContent";
 
 function CropApp() {
   const [imgSrc, setImgSrc] = useState("");
