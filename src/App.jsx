@@ -1,15 +1,11 @@
 import React from "react";
-
 import "./styles/index.css";
-import CropApp from "./components/cropApp.jsx";
-import TagAnnotation from "./components/Tag-Annot/index.jsx";
+import Canvas from "./components/canvas";
 
 function App() {
-
   return (
-    <div className="App">
-      {/*<CropApp/>*/}
-      <TagAnnotation/>
+    <div className='App'>
+      <Canvas />
     </div>
   );
 }

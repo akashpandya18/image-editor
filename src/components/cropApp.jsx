@@ -26,17 +26,17 @@ function CropApp() {
   // make and center a % aspect crop
   const centerAspectCrop = (mediaWidth, mediaHeight, aspect) => {
     return centerCrop(
-        makeAspectCrop(
-            {
-              unit: "%",
-              width: 90,
-            },
-            aspect,
-            mediaWidth,
-            mediaHeight
-        ),
+      makeAspectCrop(
+        {
+          unit: "%",
+          width: 90,
+        },
+        aspect,
         mediaWidth,
         mediaHeight
+      ),
+      mediaWidth,
+      mediaHeight
     );
   };
 
@@ -45,7 +45,7 @@ function CropApp() {
       setCrop(undefined); // Makes crop preview update between images.
       const reader = new FileReader();
       reader.addEventListener("load", () =>
-          setImgSrc(reader.result?.toString() || "")
+        setImgSrc(reader.result?.toString() || "")
       );
       reader.readAsDataURL(e.target.files[0]);
     }
@@ -59,25 +59,25 @@ function CropApp() {
   };
 
   useDebounceEffect(
-      async () => {
-        if (
-            completedCrop?.width &&
-            completedCrop?.height &&
-            imgRef.current &&
-            previewCanvasRef.current
-        ) {
-          // We use canvasPreview as it's much faster than imgPreview.
-          canvasPreview(
-              imgRef.current,
-              previewCanvasRef.current,
-              completedCrop,
-              scale,
-              rotate
-          );
-        }
-      },
-      100,
-      [completedCrop, scale, rotate, isCrop]
+    async () => {
+      if (
+        completedCrop?.width &&
+        completedCrop?.height &&
+        imgRef.current &&
+        previewCanvasRef.current
+      ) {
+        // We use canvasPreview as it's much faster than imgPreview.
+        canvasPreview(
+          imgRef.current,
+          previewCanvasRef.current,
+          completedCrop,
+          scale,
+          rotate
+        );
+      }
+    },
+    100,
+    [completedCrop, scale, rotate, isCrop]
   );
 
   const handleToggleAspectClick = () => {
@@ -91,51 +91,51 @@ function CropApp() {
   };
 
   return (
-      <div className="App">
-        <div className="main-layout">
-          {!!imgSrc ? (
-              <>
-                <Sidebar
-                    imgSrc={imgSrc}
-                    scaleValue={scale}
-                    setScale={setScale}
-                    rotateValue={rotate}
-                    setRotate={setRotate}
-                    flipHorizontal={flipHorizontal}
-                    setFlipHorizontal={setFlipHorizontal}
-                    flipVertical={flipVertical}
-                    setFlipVertical={setFlipVertical}
-                    aspect={aspect}
-                    handleToggleAspectClick={handleToggleAspectClick}
-                    setIsCrop={setIsCrop}
-                    completedCrop={completedCrop}
-                    setCompletedCrop={setCompletedCrop}
-                />
-                <MainContent
-                    scale={scale}
-                    rotate={rotate}
-                    setFlipHorizontal={setFlipHorizontal}
-                    setFlipVertical={setFlipVertical}
-                    crop={crop}
-                    setCrop={setCrop}
-                    setCompletedCrop={setCompletedCrop}
-                    imgSrc={imgSrc}
-                    aspect={aspect}
-                    isCrop={isCrop}
-                    setIsCrop={setIsCrop}
-                    imgRef={imgRef}
-                    flipHorizontal={flipHorizontal}
-                    flipVertical={flipVertical}
-                    completedCrop={completedCrop}
-                    previewCanvasRef={previewCanvasRef}
-                    onImageLoad={onImageLoad}
-                />
-              </>
-          ) : (
-              <FileUpload onSelectFile={onSelectFile} />
-          )}
-        </div>
+    <div className='app'>
+      <div className='main-layout'>
+        {!!imgSrc ? (
+          <>
+            <Sidebar
+              imgSrc={imgSrc}
+              scaleValue={scale}
+              setScale={setScale}
+              rotateValue={rotate}
+              setRotate={setRotate}
+              flipHorizontal={flipHorizontal}
+              setFlipHorizontal={setFlipHorizontal}
+              flipVertical={flipVertical}
+              setFlipVertical={setFlipVertical}
+              aspect={aspect}
+              handleToggleAspectClick={handleToggleAspectClick}
+              setIsCrop={setIsCrop}
+              completedCrop={completedCrop}
+              setCompletedCrop={setCompletedCrop}
+            />
+            <MainContent
+              scale={scale}
+              rotate={rotate}
+              setFlipHorizontal={setFlipHorizontal}
+              setFlipVertical={setFlipVertical}
+              crop={crop}
+              setCrop={setCrop}
+              setCompletedCrop={setCompletedCrop}
+              imgSrc={imgSrc}
+              aspect={aspect}
+              isCrop={isCrop}
+              setIsCrop={setIsCrop}
+              imgRef={imgRef}
+              flipHorizontal={flipHorizontal}
+              flipVertical={flipVertical}
+              completedCrop={completedCrop}
+              previewCanvasRef={previewCanvasRef}
+              onImageLoad={onImageLoad}
+            />
+          </>
+        ) : (
+          <FileUpload onSelectFile={onSelectFile} />
+        )}
       </div>
+    </div>
   );
 }
 
