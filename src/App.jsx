@@ -1,19 +1,27 @@
 import "./styles/index.css";
-import Canvas from "./components/canvas";
 import TagText from "./components/Tag-Annot";
 import TestImage from "./assets/testImage.png";
-import TagAnnSRCTEXT from "./components/testAnnot";
 import AnnoRedDot from "./extra";
-import Sundry from "./extra/sundry";
+import ImageAnnot from "./components/testAnnot";
+import AnnotationCanvas from "./components/Tag-Annot";
+import Canvas from "./components/canvas";
 
 function App() {
+  // const data = [
+  //   {
+  //     fontSize: "24px",
+  //     fontFamily: "",
+  //     color: "white",
+  //     text: "Hi Akash",
+  //     x: 24,
+  //     y: 50,
+  //   },
+  // ];
   return (
     <div className='App'>
-      {/* <Canvas width={700} height={500} /> */}
-      {/* <TagText /> */}
-      {/* <AnnoRedDot imageSrc={TestImage} /> */}
-      {/* <TagAnnSRCTEXT src={TestImage} text={"Hi Akash"} /> */}
-      <Sundry imageSrc={TestImage} />
+      {/* <Canvas height={400} width={600} /> */}
+      {/* <AnnotationCanvas imageUrl={TestImage} annotations={data} /> */}
+      <ImageAnnot imageSrc={TestImage} />
     </div>
   );
 }

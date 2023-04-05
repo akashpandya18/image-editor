@@ -3,6 +3,21 @@ import React, { useRef, useState, useEffect } from "react";
 function AnnoRedDot({ imageSrc }) {
   const canvasRef = useRef(null);
   const [annotations, setAnnotations] = useState([]);
+  const [tags, setTags] = useState([]);
+
+  const handleAddTag = (event) => {
+    if (event.key === "Enter") {
+      const newTag = event.target.value.trim();
+      if (newTag !== "" && !tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+        event.target.value = "";
+      }
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
