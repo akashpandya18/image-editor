@@ -1,63 +1,45 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
-function AnnoRedDot({ imageSrc }) {
-  const canvasRef = useRef(null);
+export default function Sundry({ imageSrc }) {
   const [annotations, setAnnotations] = useState([]);
-  const [tags, setTags] = useState([]);
+  const [text, setText] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
-  const handleAddTag = (event) => {
-    if (event.key === "Enter") {
-      const newTag = event.target.value.trim();
-      if (newTag !== "" && !tags.includes(newTag)) {
-        setTags([...tags, newTag]);
-        event.target.value = "";
-      }
-    }
-  };
+  function handleClick(e) {
+    const x = e.nativeEvent.offsetX;
+    const y = e.nativeEvent.offsetY;
+    setAnnotations([...annotations, { x, y, text }]);
+    setText("");
+    setShowForm(false);
+  }
 
-  const handleRemoveTag = (tagToRemove) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
+  function handleInputChange(e) {
+    setText(e.target.value);
+  }
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const image = new Image();
-    image.src = imageSrc;
-    image.onload = () => {
-      canvas.width = image.width;
-      canvas.height = image.height;
-      ctx.drawImage(image, 0, 0, image.width, image.height);
-    };
-  }, [imageSrc]);
-
-  const handleCanvasClick = (event) => {
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    setAnnotations([...annotations, { x, y }]);
-    // console.log("canvas click");
-  };
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const image = new Image();
-    image.src = imageSrc;
-    image.onload = () => {
-      ctx.drawImage(image, 0, 0, image.width, image.height);
-      annotations.forEach(({ x, y }) => {
-        ctx.beginPath();
-        ctx.arc(x, y, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = "red";
-        ctx.fill();
-      });
-    };
-  }, [annotations, imageSrc]);
-
-  return <canvas ref={canvasRef} onClick={handleCanvasClick} />;
+  return (
+    <div>
+      <img src={imageSrc} alt='My Image' onClick={() => setShowForm(true)} />
+      {showForm && (
+        <div>
+          <input type='text' value={text} onChange={handleInputChange} />
+          <button onClick={handleClick}>Add Annotation</button>
+        </div>
+      )}
+      {annotations.map((annotation, index) => (
+        <div
+          key={index}
+          style={{
+            position: "absolute",
+            left: annotation.x,
+            top: annotation.y,
+            backgroundColor: "white",
+            padding: "5px",
+          }}
+        >
+          <p>{annotation.text}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
-
-export default AnnoRedDot;

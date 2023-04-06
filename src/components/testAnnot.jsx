@@ -30,22 +30,6 @@ function ImageAnnot({ imageSrc }) {
     setTags(event.target.value);
   };
 
-  const handleAnnotationSubmit = () => {
-    if (currentAnnotation && currentDotPosition) {
-      setAnnotations([...annotations, currentAnnotation]);
-      setDotPosition([...dotPosition, currentDotPosition]);
-      setCurrentAnnotation(null);
-      setCurrentDotPosition(null);
-    }
-  };
-
-  const handleClearTags = () => {
-    setAnnotations([]);
-    setDotPosition([]);
-    setCurrentAnnotation(null);
-    setCurrentDotPosition(null);
-  };
-
   const handleAddTag = (e) => {
     e.preventDefault();
     const canvas = canvasRef.current;
@@ -54,11 +38,10 @@ function ImageAnnot({ imageSrc }) {
     ctx.fillStyle = "white";
     ctx.fillText(tags, currentAnnotation.x, currentAnnotation.y);
     setTags("");
+    setShowInput(false);
+    setCurrentAnnotation(null);
+    setCurrentDotPosition(null);
   };
-
-  // const handleRemoveTag = (tagToRemove) => {
-  //   setTags(tags.filter((tag) => tag !== tagToRemove));
-  // };
 
   //for initial image load
   useEffect(() => {
@@ -73,55 +56,16 @@ function ImageAnnot({ imageSrc }) {
     };
   }, [imageSrc]);
 
-  //for updating canvas when annotations happen
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const image = new Image();
-    image.src = imageSrc;
-    image.onload = () => {
-      ctx.drawImage(image, 0, 0, image.width, image.height);
-      dotPosition.forEach(({ x, y }) => {
-        ctx.beginPath();
-        ctx.arc(x, y, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = "white";
-        ctx.fill();
-      });
-    };
-  }, [annotations, dotPosition]);
-
   return (
-    <div>
+    <div style={{ position: "relative" }}>
       <canvas ref={canvasRef} onClick={(e) => handleCanvasClick(e)} />
-      <button onClick={(e) => handleClearTags(e)}>Clear</button>
       {showInput && (
         <TagAnnotationForm
           tags={tags}
           handleInputChange={handleInputChange}
           onSubmit={handleAddTag}
+          position={currentAnnotation}
         />
-      )}
-
-      {currentAnnotation && (
-        <div>
-          <p>
-            Click submit to annotate at ({currentAnnotation.x},{" "}
-            {currentAnnotation.y})
-          </p>
-          <button onClick={(e) => handleAnnotationSubmit(e)}>Submit</button>
-        </div>
-      )}
-      {annotations.length > 0 && (
-        <div>
-          <h3>Annotations</h3>
-          <ul>
-            {annotations.map((annotation, index) => (
-              <li key={index}>
-                ({annotation.x}, {annotation.y})
-              </li>
-            ))}
-          </ul>
-        </div>
       )}
     </div>
   );
